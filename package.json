@@ -1,0 +1,13 @@
+{
+  "name": "5124js",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Touch-first Sega Master System and Game Gear emulator for phones and desktop",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/build-sw.mjs && python3 -m http.server 2612",
+    "rom": "node tools/run-rom.mjs",
+    "icons": "node tools/make-icons.mjs",
+    "sw": "node tools/build-sw.mjs"
+  }
+}

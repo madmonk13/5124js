@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+roms/
+out/
+*.sms
+*.gg
+*.sg
+*.sav

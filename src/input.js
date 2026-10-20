@@ -1,0 +1,95 @@
+// Keyboard + gamepad + touch -> the Master System / Game Gear controls.
+//
+// Keys: arrows / WASD for the d-pad, Z or J for button 1, X or K for button 2,
+// Return for Pause (Start on the Game Gear). Gamepads: the d-pad or left stick;
+// the bottom (or left) face button is 1 and the right (or top) 2; Start as labeled.
+
+// Button bits (as MasterSystem.buttons reads them): a is button 2, b button 1,
+// start the Master System's Pause or the Game Gear's Start.
+export const BTN = { right: 0x01, left: 0x02, up: 0x04, down: 0x08, a: 0x10, b: 0x20, select: 0x40, start: 0x80 };
+
+const KEYS = {
+  ArrowRight: BTN.right, KeyD: BTN.right, ArrowLeft: BTN.left, KeyA: BTN.left,
+  ArrowUp: BTN.up, KeyW: BTN.up, ArrowDown: BTN.down, KeyS: BTN.down,
+  KeyX: BTN.a, KeyK: BTN.a, KeyZ: BTN.b, KeyJ: BTN.b,
+  Enter: BTN.start, NumpadEnter: BTN.start, ShiftLeft: BTN.select, ShiftRight: BTN.select, Backspace: BTN.select,
+};
+// Touch d-pad direction bits (see touch.js) -> button bits.
+const TOUCH_DIR = [[0x10, BTN.up], [0x20, BTN.down], [0x40, BTN.left], [0x80, BTN.right]];
+
+export class Input {
+  constructor() {
+    this.keys = new Set();
+    this.uiSelect = false;    // the top-bar buttons
+    this.uiStart = false;
+    this.onActivity = null;   // called on keyboard or gamepad input
+    this.padStartHeld = false; // the gamepad's Start resumed the game: not a press for it until let go
+    // Extra sources (touch controls): objects with dir() -> direction bits
+    // (0x10 up, 0x20 down, 0x40 left, 0x80 right), a() and b() -> bool.
+    this.sources = [];
+    window.addEventListener('keydown', (e) => {
+      if (!(e.code in KEYS) || e.metaKey || e.ctrlKey || e.altKey) return;
+      // While a full-screen sheet is open, keys (Return especially) belong to its controls.
+      if (document.querySelector('.sheet-backdrop:not([hidden])')) return;
+      const t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'BUTTON')) t.blur();
+      e.preventDefault();
+      this.keys.add(e.code);
+      if (this.onActivity) this.onActivity();
+    });
+    window.addEventListener('keyup', (e) => this.keys.delete(e.code));
+    window.addEventListener('blur', () => this.keys.clear());
+  }
+
+  // Everything pressed right now, as button bits.
+  read() {
+    let bits = (this.uiSelect ? BTN.select : 0) | (this.uiStart ? BTN.start : 0);
+    for (const code of this.keys) bits |= KEYS[code] || 0;
+
+    for (const src of this.sources) {
+      const d = src.dir();
+      for (const [t, g] of TOUCH_DIR) if (d & t) bits |= g;
+      if (src.a()) bits |= BTN.a;
+      if (src.b()) bits |= BTN.b;
+    }
+
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const pad of pads) {
+      if (!pad) continue;
+      const b = (i) => pad.buttons[i] && pad.buttons[i].pressed;
+      const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
+      let p = 0;
+      if (ay < -0.5 || b(12)) p |= BTN.up;
+      if (ay > 0.5 || b(13)) p |= BTN.down;
+      if (ax < -0.5 || b(14)) p |= BTN.left;
+      if (ax > 0.5 || b(15)) p |= BTN.right;
+      if (b(1) || b(3)) p |= BTN.a;
+      if (b(0) || b(2)) p |= BTN.b;
+      if (b(8)) p |= BTN.select;
+      if (b(9) && !this.padStartHeld) p |= BTN.start;    // Start (not the press that just resumed from a pause)
+      if (!b(9)) this.padStartHeld = false;
+      if (p && this.onActivity) this.onActivity();
+      bits |= p;
+      break;                    // one player
+    }
+
+    // A real d-pad can't press opposite directions together.
+    if ((bits & (BTN.left | BTN.right)) === (BTN.left | BTN.right)) bits &= ~(BTN.left | BTN.right);
+    if ((bits & (BTN.up | BTN.down)) === (BTN.up | BTN.down)) bits &= ~(BTN.up | BTN.down);
+    return bits;
+  }
+}
+
+// The controls, as [keys, what they do] rows for the keyboard or gamepad hints
+// (mode 'keys' or 'pad'). Gamepads go by position, as on a Nintendo pad.
+export function controlLegend(mode) {
+  const keys = mode === 'keys';
+  const rows = [
+    [keys ? 'Arrows  or  W A S D' : 'D-pad  ·  left stick', 'D-pad'],
+    [keys ? 'Z  or  J' : 'Bottom or left button', 'Button 1'],
+    [keys ? 'X  or  K' : 'Right or top button', 'Button 2'],
+    [keys ? 'Return' : 'Start', 'Pause (Start on Game Gear)'],
+  ];
+  if (keys) rows.push(['P', 'Pause the emulator']);
+  return rows;
+}
