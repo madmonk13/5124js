@@ -93,3 +93,17 @@ a palette, a tile, a checkerboard background and a sprite, and scrolls from the 
 - PAL timing (50 Hz), the light phaser, paddle and sports pad, and Game Gear games that run in
   Master System mode.
 - Game Gear stereo (the sound is mono).
+
+## More emulators
+
+5124js is one of a family of touch-first emulators, all plain JavaScript web apps with no
+dependencies that install and work offline:
+
+| App | Plays |
+|---|---|
+| [z80js](https://github.com/madmonk13/z80js) | Arcade games: 212 of them, on Z80, 6809, 68000 and other boards |
+| [6502js](https://github.com/madmonk13/2600touch) | Atari 2600 |
+| [2A03js](https://github.com/madmonk13/2A03js) | NES / Famicom |
+| [SM83js](https://github.com/madmonk13/SM83js) | Game Boy and Game Boy Color |
+| [P8js](https://github.com/madmonk13/P8js) | PICO-8 carts |
+| [68Kjs](https://github.com/madmonk13/68Kjs) | Sega Mega Drive / Genesis |
