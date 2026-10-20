@@ -8,6 +8,8 @@ a saved game library, pause and resume, battery saves and an installable web app
 Named for the Sega 315-5124, the video chip of the Mark III and the Master System (the Game Gear's
 is its descendant), as the other apps are named for their chips.
 
+**Play it:** [madmonk13.github.io/5124js](https://madmonk13.github.io/5124js/)
+
 ## Offline and install
 
 The app is a PWA: open it once while online and a service worker (`sw.js`) caches it, so it then
